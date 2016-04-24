@@ -260,9 +260,71 @@ namespace filesmanagement.process
 
         }
 
-        public static void CleanDuplicates()
+        public static LinkedList<string> Clean(string path)
         {
+            LinkedList<string> _list = new LinkedList<string>();
+            if (Directory.Exists(path))
+            {
+                try
+                {
+                    string[] directories = Directory.GetDirectories(path);
+                    if (directories != null && directories.Length > 0)
+                    {
+                        foreach (string directory in directories)
+                        {
+                            LinkedList<string> _deepList = Clean(directory);
+                            foreach (string s in _deepList)
+                            {
+                                _list.AddLast(s);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // suppress and continue after this exception
+                    Logger.Write(String.Format("Cannot get child directories for this parent directory: {0} due to exception: {1}", path, ex.ToString()));
+                }
 
+                try
+                {
+                    string[] files = Directory.GetFiles(path);
+                    if (files == null)
+                    {
+                        string[] directories = Directory.GetDirectories(path);
+                        if (directories == null)
+                        {
+                            Directory.Delete(path);
+                            _list.AddLast(path);
+                        }
+                        if (directories != null && directories.Length == 0)
+                        {
+                            Directory.Delete(path);
+                            _list.AddLast(path);
+                        }
+                    }
+                    if (files != null && files.Length == 0)
+                    {
+                        string[] directories = Directory.GetDirectories(path);
+                        if (directories == null)
+                        {
+                            Directory.Delete(path);
+                            _list.AddLast(path);
+                        }
+                        if (directories != null && directories.Length == 0)
+                        {
+                            Directory.Delete(path);
+                            _list.AddLast(path);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // suppress and continue after this exception
+                    Logger.Write(String.Format("Cannot delete the directory: {0} due to exception: {1}", path, ex.ToString()));
+                }                
+            }
+            return _list;
         }
 
         public static void Delete()

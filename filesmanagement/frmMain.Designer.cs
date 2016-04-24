@@ -33,6 +33,7 @@
             this.btnAnalysisWS = new System.Windows.Forms.Button();
             this.btnOrganize = new System.Windows.Forms.Button();
             this.richTxtBoxStatus = new System.Windows.Forms.RichTextBox();
+            this.btnClean = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnCreateWS
@@ -73,11 +74,22 @@
             this.richTxtBoxStatus.TabIndex = 4;
             this.richTxtBoxStatus.Text = "";
             // 
+            // btnClean
+            // 
+            this.btnClean.Location = new System.Drawing.Point(371, 12);
+            this.btnClean.Name = "btnClean";
+            this.btnClean.Size = new System.Drawing.Size(124, 23);
+            this.btnClean.TabIndex = 5;
+            this.btnClean.Text = "Clean workspace";
+            this.btnClean.UseVisualStyleBackColor = true;
+            this.btnClean.Click += new System.EventHandler(this.btnClean_Click);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1044, 649);
+            this.Controls.Add(this.btnClean);
             this.Controls.Add(this.richTxtBoxStatus);
             this.Controls.Add(this.btnOrganize);
             this.Controls.Add(this.btnAnalysisWS);
@@ -95,6 +107,7 @@
         private System.Windows.Forms.Button btnAnalysisWS;
         private System.Windows.Forms.Button btnOrganize;
         private System.Windows.Forms.RichTextBox richTxtBoxStatus;
+        private System.Windows.Forms.Button btnClean;
     }
 }
 

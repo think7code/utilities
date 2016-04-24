@@ -107,6 +107,7 @@ namespace filesmanagement
                     richTxtBoxStatus.AppendText("\nWorkspace created successfully!!");
                 }
                 Task<LinkedList<string>> t_organize = Task.Run(() => WorkSpace.Organize(source, destination));
+                t_organize.Wait();
                 if (t_organize.IsCompleted)
                 {
                     _failed_finallist = t_organize.Result;
@@ -136,6 +137,46 @@ namespace filesmanagement
                 }
             }
             btnOrganize.Enabled = true;
+        }
+
+        private void btnClean_Click(object sender, EventArgs e)
+        {
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Task<LinkedList<string>> t = Task<LinkedList<string>>.Run(() => WorkSpace.Clean(folderBrowserDialog1.SelectedPath));
+                try
+                {
+                    t.Wait();
+                    if (t.IsCompleted)
+                    {
+                        LinkedList<string> _finallist = t.Result;
+                        if (_finallist != null && _finallist.Count > 0)
+                        {
+                            richTxtBoxStatus.AppendText("\nThe below directories were cleanedup:");
+                            foreach (string _ff in _finallist)
+                            {
+                                richTxtBoxStatus.AppendText(String.Format("\n{0}", _ff));
+                            }
+                        }
+                        else
+                        {
+                            richTxtBoxStatus.AppendText("\nNo directory found empty!!");
+                        }
+                    }
+                    richTxtBoxStatus.AppendText("\nCleanup completed successfully!!");
+                }
+                catch (AggregateException aex)
+                {
+                    // Assume we know what's going on with this particular exception.
+                    // Rethrow anything else. AggregateException.Handle provides
+                    // another way to express this. See later example.
+                    foreach (Exception ex in aex.InnerExceptions)
+                    {
+                        // log the exceptions
+                        Logger.Write("Log exception caused due to : {0}", ex.ToString());
+                    }
+                }
+            }
         }
     }
 }

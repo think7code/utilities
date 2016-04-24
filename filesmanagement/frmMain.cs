@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using filesmanagement.process;
 using System.IO;
+using Microsoft.Practices.EnterpriseLibrary.Logging;
 
 namespace filesmanagement
 {
@@ -58,6 +59,7 @@ namespace filesmanagement
                     if (t.IsCompleted)
                     {
                         LinkedList<FileInfo> _finallist = t.Result;
+                        MessageBox.Show("Analysis completed successfully!!");
                     }
                 }
                 catch (AggregateException aex)
@@ -76,45 +78,50 @@ namespace filesmanagement
 
         private void btnOrganize_Click(object sender, EventArgs e)
         {
-            LinkedList<FileInfo> _finallist = null;
-            LinkedList<FileInfo> _failed_finallist = null;
+            btnOrganize.Enabled = false;
+            richTxtBoxStatus.Clear();
+
+            LinkedList<string> _failed_finallist = null;
             String source = null;
             String destination = null;
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
-                MessageBox.Show("Source selected!!");
                 source = folderBrowserDialog1.SelectedPath;
+                richTxtBoxStatus.AppendText(String.Format("Source selected: {0}!!",source));
             }
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 destination = folderBrowserDialog1.SelectedPath;
-                MessageBox.Show("Workspace selected!!");
+                richTxtBoxStatus.AppendText(String.Format("\nWorkspace selected: {0}!!", destination));
             }
 
-            Task<LinkedList<FileInfo>> t_source = Task<LinkedList<FileInfo>>.Run(() => WorkSpace.Analysis2(source));
             Task t_destination = Task.Run(() => WorkSpace.Create(destination));
 
-            // Do some processing
+            // Do some more processing
 
             try
             {
                 t_destination.Wait();
                 if (t_destination.IsCompleted)
                 {
-                    MessageBox.Show("Workspace created successfully!!");
+                    richTxtBoxStatus.AppendText("\nWorkspace created successfully!!");
                 }
-                t_source.Wait();
-                if (t_source.IsCompleted)
-                {
-                    _finallist = t_source.Result;
-                    MessageBox.Show("Files to be organized are ready!!");
-                }
-                Task<LinkedList<FileInfo>> t_organize = Task<LinkedList<FileInfo>>.Run(() => WorkSpace.Organize(_finallist,destination));
-                t_organize.Wait();
+                Task<LinkedList<string>> t_organize = Task.Run(() => WorkSpace.Organize(source, destination));
                 if (t_organize.IsCompleted)
                 {
                     _failed_finallist = t_organize.Result;
-                    MessageBox.Show("Files were organized are successfully!!");
+                    if(_failed_finallist != null && _failed_finallist.Count > 0)
+                    {
+                        richTxtBoxStatus.AppendText("\nFailed to copy the below files and directories:");
+                        foreach (string _ff in _failed_finallist)
+                        {
+                            richTxtBoxStatus.AppendText(String.Format("\n{0}", _ff));
+                        }
+                    }
+                    else
+                    {
+                        richTxtBoxStatus.AppendText("\nSource is organized successfully!!");
+                    }
                 }
             }
             catch (AggregateException aex)
@@ -125,9 +132,10 @@ namespace filesmanagement
                 foreach (Exception ex in aex.InnerExceptions)
                 {
                     // log the exceptions
-                    throw ex;
+                    Logger.Write("Log exception caused due to : {0}", ex.ToString());
                 }
             }
+            btnOrganize.Enabled = true;
         }
     }
 }

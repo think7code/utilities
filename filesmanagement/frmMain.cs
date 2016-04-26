@@ -16,6 +16,8 @@ namespace filesmanagement
 {
     public partial class frmMain : Form
     {
+        delegate void UpdateStatusCallback(String status);
+
         public frmMain()
         {
             InitializeComponent();
@@ -76,23 +78,65 @@ namespace filesmanagement
             }
         }
 
+        private void UpdateStatus(String status)
+        {
+            SetText(status);
+        }
+
+        private void SetText(String status)
+        {
+            if (richTxtBoxStatus.InvokeRequired)
+            {
+                UpdateStatusCallback d = new UpdateStatusCallback(UpdateStatus);
+                this.Invoke(d, new object[] { status });
+            }
+            else
+            {
+                richTxtBoxStatus.AppendText(status);
+            }
+        }
+
+        private void Process(LinkedList<string> final_list)
+        {
+            try
+            {
+                if (final_list != null && final_list.Count > 0)
+                {
+                    SetText("\nFailed to copy the below files and directories:");
+                    foreach (string _ff in final_list)
+                    {
+                        SetText(String.Format("\n{0}", _ff));
+                    }
+                    SetText("\nOrganizing workspace completed with above unorganized files. please review or re-run the process again!!");
+                }
+                else
+                {
+                    SetText("\nSource is organized successfully!!");
+                }
+            }
+            catch (Exception ex)
+            {
+                // log the exceptions
+                Logger.Write("Log exception caused due to : {0}", ex.ToString());
+            }
+        }
+
         private void btnOrganize_Click(object sender, EventArgs e)
         {
             btnOrganize.Enabled = false;
             richTxtBoxStatus.Clear();
 
-            LinkedList<string> _failed_finallist = null;
             String source = null;
             String destination = null;
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 source = folderBrowserDialog1.SelectedPath;
-                richTxtBoxStatus.AppendText(String.Format("Source selected: {0}!!",source));
+                SetText(String.Format("Source selected: {0}!!",source));
             }
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 destination = folderBrowserDialog1.SelectedPath;
-                richTxtBoxStatus.AppendText(String.Format("\nWorkspace selected: {0}!!", destination));
+                SetText(String.Format("\nWorkspace selected: {0}!!", destination));
             }
 
             Task t_destination = Task.Run(() => WorkSpace.Create(destination));
@@ -104,26 +148,11 @@ namespace filesmanagement
                 t_destination.Wait();
                 if (t_destination.IsCompleted)
                 {
-                    richTxtBoxStatus.AppendText("\nWorkspace created successfully!!");
+                    SetText("\nWorkspace created successfully!!");
                 }
-                Task<LinkedList<string>> t_organize = Task.Run(() => WorkSpace.Organize(source, destination));
-                t_organize.Wait();
-                if (t_organize.IsCompleted)
-                {
-                    _failed_finallist = t_organize.Result;
-                    if(_failed_finallist != null && _failed_finallist.Count > 0)
-                    {
-                        richTxtBoxStatus.AppendText("\nFailed to copy the below files and directories:");
-                        foreach (string _ff in _failed_finallist)
-                        {
-                            richTxtBoxStatus.AppendText(String.Format("\n{0}", _ff));
-                        }
-                    }
-                    else
-                    {
-                        richTxtBoxStatus.AppendText("\nSource is organized successfully!!");
-                    }
-                }
+                Task<LinkedList<string>> t_organize = Task.Factory.StartNew(() => WorkSpace.Organize(source, destination));
+                t_organize.ContinueWith(t => Process(t.Result));
+                SetText("\nOrganizing workspace started....");
             }
             catch (AggregateException aex)
             {
@@ -152,18 +181,18 @@ namespace filesmanagement
                         LinkedList<string> _finallist = t.Result;
                         if (_finallist != null && _finallist.Count > 0)
                         {
-                            richTxtBoxStatus.AppendText("\nThe below directories were cleanedup:");
+                            SetText("\nThe below directories were cleanedup:");
                             foreach (string _ff in _finallist)
                             {
-                                richTxtBoxStatus.AppendText(String.Format("\n{0}", _ff));
+                                SetText(String.Format("\n{0}", _ff));
                             }
                         }
                         else
                         {
-                            richTxtBoxStatus.AppendText("\nNo directory found empty!!");
+                            SetText("\nNo directory found empty!!");
                         }
                     }
-                    richTxtBoxStatus.AppendText("\nCleanup completed successfully!!");
+                    SetText("\nCleanup completed successfully!!");
                 }
                 catch (AggregateException aex)
                 {

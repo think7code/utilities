@@ -121,7 +121,7 @@ namespace filesmanagement.process
             if (Directory.Exists(path))
             {
                 string[] files = Directory.GetFiles(path);
-                if(files!=null && files.Length > 0)
+                if (files != null && files.Length > 0)
                 {
                     foreach (string file in files)
                     {
@@ -129,12 +129,12 @@ namespace filesmanagement.process
                     }
                 }
                 string[] directories = Directory.GetDirectories(path);
-                if(directories != null && directories.Length > 0)
+                if (directories != null && directories.Length > 0)
                 {
-                    foreach(string directory in directories)
+                    foreach (string directory in directories)
                     {
                         LinkedList<string> _deepList = Analysis(directory);
-                        foreach(string s in _deepList)
+                        foreach (string s in _deepList)
                         {
                             _list.AddLast(s);
                         }
@@ -163,7 +163,7 @@ namespace filesmanagement.process
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     // suppress and continue after this exception
                     Logger.Write(String.Format("Cannot get files for the directory: {0} due to exception: {1}", path, ex.ToString()));
@@ -184,7 +184,7 @@ namespace filesmanagement.process
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     // suppress and continue after this exception
                     Logger.Write(String.Format("Cannot get child directories for this parent directory: {0} due to exception: {1}", path, ex.ToString()));
@@ -199,7 +199,6 @@ namespace filesmanagement.process
             {
                 throw new Exception("Creating workspace operation aborted as destination workspace not specified or exists");
             }
-
             try
             {
                 if (!Directory.Exists(DestinationPath))
@@ -232,7 +231,7 @@ namespace filesmanagement.process
                     Directory.CreateDirectory(year_path);
                 }
 
-                for (_backmonth=0; _backmonth<_months.Length; _backmonth++)
+                for (_backmonth = 0; _backmonth < _months.Length; _backmonth++)
                 {
                     if (!((_backmonth >= _month) && (_backyear == _year)))
                     {
@@ -244,7 +243,6 @@ namespace filesmanagement.process
                         }
                     }
                 }
-
                 // keep increment the year+1
                 _backyear = _backyear + 1;
             }
@@ -322,7 +320,7 @@ namespace filesmanagement.process
                 {
                     // suppress and continue after this exception
                     Logger.Write(String.Format("Cannot delete the directory: {0} due to exception: {1}", path, ex.ToString()));
-                }                
+                }
             }
             return _list;
         }
@@ -354,7 +352,7 @@ namespace filesmanagement.process
                     {
                         _file.MoveTo(_DestinationPath);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         // continue and suppress the exceptions
                         Logger.Write(String.Format("Copy failed to destination path: {0) due to exception: {1}", _DestinationPath, ex.ToString()));
@@ -395,10 +393,10 @@ namespace filesmanagement.process
             }
         }
 
-        public static LinkedList<string> Organize(string SourcePath, string WorkspacePath)
+        public static List<string> Organize(string SourcePath, string WorkspacePath)
         {
             String[] _months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
-            LinkedList<string> _notprocessed = new LinkedList<string>();
+            List<string> _notprocessed = new List<string>();
             if (!String.IsNullOrEmpty(SourcePath) && !String.IsNullOrEmpty(WorkspacePath) && Directory.Exists(SourcePath) && Directory.Exists(WorkspacePath))
             {
                 try
@@ -406,9 +404,9 @@ namespace filesmanagement.process
                     string[] files = Directory.GetFiles(SourcePath);
                     if (files != null && files.Length > 0)
                     {
-                        foreach (string file in files)
+                        files.ToList().ForEach(f =>
                         {
-                            FileInfo _file = new FileInfo(file);
+                            FileInfo _file = new FileInfo(f);
                             int _year = _file.LastWriteTime.Year;
                             int _month = _file.LastWriteTime.Month;
                             String _DestinationPath = Path.Combine(WorkspacePath, _year.ToString(), _months[_month - 1], _file.Name);
@@ -439,21 +437,21 @@ namespace filesmanagement.process
                             catch (Exception ex)
                             {
                                 // suppress and continue after this exception
-                                Logger.Write(String.Format("Cannot copy file to the destination {0} due to exception: {1}", file, ex.ToString()));
-                                _notprocessed.AddLast(_file.FullName);
+                                Logger.Write(String.Format("Cannot copy file to the destination {0} due to exception: {1}", _file.FullName, ex.ToString()));
+                                _notprocessed.Add(_file.FullName);
                             }
                             finally
                             {
                                 _file = null;
                             }
-                        }
+                        });
                     }
                 }
                 catch (Exception ex)
                 {
                     // suppress and continue after this exception
                     Logger.Write(String.Format("Cannot get files for the directory: {0} due to exception: {1}", SourcePath, ex.ToString()));
-                    _notprocessed.AddLast(SourcePath);
+                    _notprocessed.Add(SourcePath);
                 }
 
                 try
@@ -463,12 +461,12 @@ namespace filesmanagement.process
                     {
                         foreach (string directory in directories)
                         {
-                            LinkedList<string> _deepList = Organize(directory, WorkspacePath);
+                            List<string> _deepList = Organize(directory, WorkspacePath);
                             if (_deepList != null && _deepList.Count > 0)
                             {
                                 foreach (string file in _deepList)
                                 {
-                                    _notprocessed.AddLast(file);
+                                    _notprocessed.Add(file);
                                 }
                             }
                         }

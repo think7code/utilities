@@ -96,17 +96,20 @@ namespace filesmanagement
             }
         }
 
-        private void Process(LinkedList<string> final_list)
+        private void Process(List<string> final_list)
         {
             try
             {
                 if (final_list != null && final_list.Count > 0)
                 {
                     SetText("\nFailed to copy the below files and directories:");
-                    foreach (string _ff in final_list)
-                    {
-                        SetText(String.Format("\n{0}", _ff));
-                    }
+                    final_list.ForEach(f => {
+                        SetText(String.Format("\n{0}", f));
+                    });
+                    //foreach (string _ff in final_list)
+                    //{
+                    //    SetText(String.Format("\n{0}", _ff));
+                    //}
                     SetText("\nOrganizing workspace completed with above unorganized files. please review or re-run the process again!!");
                 }
                 else
@@ -131,7 +134,7 @@ namespace filesmanagement
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 source = folderBrowserDialog1.SelectedPath;
-                SetText(String.Format("Source selected: {0}!!",source));
+                SetText(String.Format("Source selected: {0}!!", source));
             }
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -139,9 +142,10 @@ namespace filesmanagement
                 SetText(String.Format("\nWorkspace selected: {0}!!", destination));
             }
 
+            // initiate creating workspace
             Task t_destination = Task.Run(() => WorkSpace.Create(destination));
 
-            // Do some more processing
+            // do some more processing
 
             try
             {
@@ -150,7 +154,7 @@ namespace filesmanagement
                 {
                     SetText("\nWorkspace created successfully!!");
                 }
-                Task<LinkedList<string>> t_organize = Task.Factory.StartNew(() => WorkSpace.Organize(source, destination));
+                Task<List<string>> t_organize = Task.Factory.StartNew(() => WorkSpace.Organize(source, destination));
                 t_organize.ContinueWith(t => Process(t.Result));
                 SetText("\nOrganizing workspace started....");
             }
